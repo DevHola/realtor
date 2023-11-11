@@ -7,6 +7,7 @@ Router.post('/login', Usercontroller.userLogin)
 Router.get('/users', Usercontroller.allUsers)
 Router.get('/user/:id', verifytoken.verify, Usercontroller.user)
 Router.get('/profile/user', verifytoken.verify, Usercontroller.UserProfile)
+Router.get('/posts', verifytoken.verify, Usercontroller.userPosts)
 Router.get('/forget', Usercontroller.checkUserExistForget)
 Router.delete('/user/delete/:id', Usercontroller.deleteuser)
 

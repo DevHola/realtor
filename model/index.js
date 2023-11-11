@@ -16,7 +16,13 @@ db.sequelize = sequelize
 // Import Models
 const User = require('./user.model')(sequelize)
 const Profile = require('./profile.model')(sequelize)
+const Post = require('./post.model')(sequelize)
 // Association
 User.hasOne(Profile, { foreignKey: 'userId', as: 'userProfile' })
 Profile.belongsTo(User, { foreignKey: 'userId', as: 'user' })
-module.exports = { db, User, Profile }
+User.hasMany(Post, { foreignKey: 'userId', as: 'posts' })
+Post.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+})
+module.exports = { db, User, Profile, Post }

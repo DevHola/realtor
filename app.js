@@ -12,6 +12,7 @@ app.use(express.urlencoded({ extended: false }))
 const { db } = require('./model/index')
 const Userrouter = require('./routes/user.route')
 const Profilerouter = require('./routes/profile.route')
+const Postrouter = require('./routes/post.route')
 app.use((error, req, res, next) => {
   res.status(500).json({
     message: error.message
@@ -19,6 +20,7 @@ app.use((error, req, res, next) => {
 })
 app.use('/api', Userrouter)
 app.use('/api', Profilerouter)
+app.use('/api', Postrouter)
 
 db.sequelize.sync()
   .then(result => {

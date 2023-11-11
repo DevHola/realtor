@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const { User, Profile } = require('../model/index')
+const { User, Profile, Post } = require('../model/index')
 
 const registerUser = async (req, res, next) => {
   if (!req.body.name || !req.body.email || !req.body.password) {
@@ -203,4 +203,22 @@ const UserProfile = async (req, res, next) => {
     next(error)
   }
 }
-module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget }
+const userPosts = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      include: { model: Post, as: 'posts' }
+    })
+    if (!user) {
+      res.status(404).json({
+        meessage: 'user posts not found'
+      })
+    }
+    res.status(200).json({
+      message: 'success',
+      user
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts }

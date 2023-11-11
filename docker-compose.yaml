@@ -11,7 +11,12 @@ services:
       - POSTGRES_PASSWORD=12345678
       - POSTGRES_USER=devhola
       - POSTGRES_DB=node_live_db_test
-
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+      
   node_app:
     build: .
     container_name: node_app
