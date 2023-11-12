@@ -221,4 +221,142 @@ const userPosts = async (req, res, next) => {
     next(error)
   }
 }
-module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts }
+
+const addFriend = async (req, res, next) => {
+  const user = await User.findByPk(req.user.id)
+  const targetuser = await User.findByPk(req.params.id)
+  const alreadyfriends = user.friends ? user.friends.some(friend => friend.id === targetuser.id) : false
+  const talreadyfriends = targetuser.friends ? targetuser.friends.some(friend => friend.id === user.id) : false
+  // TODO:WHEN USER ADD THE USERID AND STATUS WOULD BE ADDED TO FRIENDS ARRAY IT WOULD ALSO BE ADDED TO THE TARGET FRIEND LIST THEN IF TARGET USER ACCEPT THE BOTH USERS FRIEN STATUS IS ACCEPTED
+  try {
+    if (user.friends === null) {
+      const fjempty = [{ id: targetuser.id, status: 'pending' }]
+      user.set(
+        'friends', fjempty)
+      await user.save()
+    } else {
+      if (alreadyfriends) {
+        res.status(200).json({ message: 'already added' })
+      } else {
+        const friendofuser = [...user.friends, { id: targetuser.id, status: 'pending', isInitiator: true }]
+        const friendjson = friendofuser
+        user.set(
+          'friends', friendjson
+        )
+        await user.save()
+      }
+    }
+    if (targetuser.friends === null) {
+      const tarempty = [{ id: user.id, status: 'pending' }]
+      targetuser.set(
+        'friends', tarempty
+      )
+      await targetuser.save()
+    } else {
+      if (talreadyfriends) {
+        res.status(200).json({ message: 'already added' })
+      }
+      const friendoftarget = [...targetuser.friends, { id: user.id, status: 'pending', isInitiator: false }]
+      const tf = friendoftarget
+      targetuser.set(
+        'friends', tf
+      )
+      await targetuser.save()
+    }
+    res.status(200).json({
+      message: 'friend request sent'
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+const getrecievedallfriendRequest = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    const friends = user.friends.filter(friend => friend.isInitiator === false && friend.status === 'pending')
+    if (friends.length === 0) {
+      res.status(200).json({
+        message: 'no pending friend request'
+      })
+    }
+    res.status(200).json({
+      message: 'retrival Success',
+      friends
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+const getallsentfriendRequest = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    const friends = user.friends.filter(friend => friend.isInitiator === true && friend.status === 'pending')
+    if (friends.length === 0) {
+      res.status(200).json({
+        message: 'no pending friend request'
+      })
+    }
+    res.status(200).json({
+      message: 'retrival Success',
+      friends
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+const getUserFriends = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    if (!user) {
+      res.status(404).json({
+        message: 'user not found'
+      })
+    }
+    const friends = user.friends.filter(friend => friend.status === 'accepted')
+    if (friends.length === 0) {
+      res.status(200).json({
+        message: '0 friends found'
+      })
+    }
+    res.status(200).json({
+      message: 'successful retrival',
+      friends
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+const cancelRequest = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    const target = await User.findByPk(req.params.id)
+    if (!user || !target) {
+      res.status(404).json({
+        message: 'user not found'
+      })
+    }
+    const checkiffrienduser = user.friends ? user.friends.some(friend => friend.id === target.id) : false
+    const checkiffriendtarget = target.friends ? target.friends.some(friend => friend.id !== user.id) : false
+    if (!checkiffrienduser || !checkiffriendtarget) {
+      res.status(200).json({
+        message: 'both users are not friends'
+      })
+    }
+    const userupdatefriends = user.friends.filter(friend => friend.id !== target.id)
+    const targetupdatefriends = target.friends.filter(friend => friend.id !== user.id)
+    user.set(
+      'friends', userupdatefriends
+    )
+    target.set(
+      'friends', targetupdatefriends
+    )
+    await Promise.all([user.save(), target.save()])
+    res.status(200).json({
+      message: 'user unfriend'
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+// TODO:ACCEPTED REQUEST
+module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts, addFriend, getrecievedallfriendRequest, getallsentfriendRequest, getUserFriends, cancelRequest }

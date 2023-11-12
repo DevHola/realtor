@@ -29,6 +29,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null
+    },
+    friends: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null
     }
   }, {
     sequelize,
