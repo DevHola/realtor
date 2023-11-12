@@ -17,11 +17,28 @@ module.exports = (sequelize) => {
       }
     },
     multimedia: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: null
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      get () {
+        const storedvalue = this.getDataValue('multimedia')
+        return storedvalue ? storedvalue.split(';') : []
+      },
+      set (val) {
+        this.setDataValue('multimedia', Array.isArray(val) ? val.join(';') : val)
+      }
     },
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING)
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      get () {
+        const storedvalue = this.getDataValue('tags')
+        return storedvalue ? storedvalue.split(';') : []
+      },
+      set (val) {
+        this.setDataValue('tags', Array.isArray(val) ? val.join(';') : val)
+      }
     }
   },
   {

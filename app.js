@@ -22,7 +22,7 @@ app.use('/api', Userrouter)
 app.use('/api', Profilerouter)
 app.use('/api', Postrouter)
 
-db.sequelize.sync()
+db.sequelize.sync({ force: true })
   .then(result => {
     console.log('Database Connected')
     app.listen(process.env.PORT, () => {
