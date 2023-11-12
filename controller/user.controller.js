@@ -358,5 +358,28 @@ const cancelRequest = async (req, res, next) => {
     next(error)
   }
 }
+const acceptRequest = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    const target = await User.findByPk(req.params.id)
+    const userfriendup = user.friends.filter(friend => {
+      if (friend.id === target.id && friend.status === 'pending' && friend.isInitiator === false) {
+        friend.status = 'accepted'
+      }
+      return friend
+    })
+    user.friends = userfriendup
+    const targetfriendup = target.friends.filter(friend => {
+      if (friend.id === user.id && friend.status === 'pending' && friend.isInitiator === true) {
+        friend.status = 'accepted'
+      }
+      return friend
+    })
+    target.friends = targetfriendup
+    await Promise.all([user.save(), target.save()])
+  } catch (error) {
+    next(error)
+  }
+}
 // TODO:ACCEPTED REQUEST
-module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts, addFriend, getrecievedallfriendRequest, getallsentfriendRequest, getUserFriends, cancelRequest }
+module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts, addFriend, getrecievedallfriendRequest, getallsentfriendRequest, getUserFriends, cancelRequest, acceptRequest }
