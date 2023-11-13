@@ -27,8 +27,8 @@ Post.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user'
 })
-Post.hasMany(Hashtag, { through: 'PostHashtag', foreignKey: 'postId' })
-Hashtag.belongsToMany(Post, { through: 'PostHashtag', foreignKey: 'hashtagId' })
+Post.belongsToMany(Hashtag, { through: 'PostHashtag', foreignKey: 'postId', as: 'hashtags' })
+Hashtag.belongsToMany(Post, { through: 'PostHashtag', foreignKey: 'hashtagId', as: 'posts' })
 Hashtag.hasOne(Hashatagmetrics, { foreignKey: 'hashtagId', as: 'metics' })
 Hashatagmetrics.belongsTo(Hashtag, { foreignKey: 'hashtagId', as: 'hashtag' })
 module.exports = { db, User, Profile, Post }

@@ -73,4 +73,30 @@ const updatePost = async (req, res, next) => {
     }
   }
 }
-module.exports = { createPost, getAllPostByUser, updatePost }
+const getAllFriendsPost = async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    if (!user) {
+      res.status(404).josn({
+        message: 'user not found'
+      })
+    }
+    const allpost = []
+    const friends = user.friends.filter(friend => friend.status === 'accepted')
+    for (let i = 0; i < friends.length; i++) {
+      const userpost = await Post.findAll({
+        where: {
+          userId: friends[i].id
+        }
+      })
+      allpost.push(...userpost)
+    }
+    res.status(200).json({
+      message: 'friends status retrieved',
+      allpost
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+module.exports = { createPost, getAllPostByUser, updatePost, getAllFriendsPost }

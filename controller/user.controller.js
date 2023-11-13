@@ -120,7 +120,11 @@ const allUsers = async (req, res, next) => {
 }
 const user = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id)
+    const user = await User.findOne({
+      where: {
+        id: req.params.id
+      }
+    })
     if (!user) {
       res.status(404).json({ message: 'User not found' })
     }
@@ -230,7 +234,7 @@ const addFriend = async (req, res, next) => {
   // TODO:WHEN USER ADD THE USERID AND STATUS WOULD BE ADDED TO FRIENDS ARRAY IT WOULD ALSO BE ADDED TO THE TARGET FRIEND LIST THEN IF TARGET USER ACCEPT THE BOTH USERS FRIEN STATUS IS ACCEPTED
   try {
     if (user.friends === null) {
-      const fjempty = [{ id: targetuser.id, status: 'pending' }]
+      const fjempty = [{ id: targetuser.id, status: 'pending', isInitiator: true }]
       user.set(
         'friends', fjempty)
       await user.save()
@@ -247,7 +251,7 @@ const addFriend = async (req, res, next) => {
       }
     }
     if (targetuser.friends === null) {
-      const tarempty = [{ id: user.id, status: 'pending' }]
+      const tarempty = [{ id: user.id, status: 'pending', isInitiator: false }]
       targetuser.set(
         'friends', tarempty
       )
@@ -306,7 +310,7 @@ const getallsentfriendRequest = async (req, res, next) => {
 }
 const getUserFriends = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.user.id)
+    const user = await User.findOne({ where: { id: req.user.id } })
     if (!user) {
       res.status(404).json({
         message: 'user not found'
@@ -335,9 +339,9 @@ const cancelRequest = async (req, res, next) => {
         message: 'user not found'
       })
     }
-    const checkiffrienduser = user.friends ? user.friends.some(friend => friend.id === target.id) : false
-    const checkiffriendtarget = target.friends ? target.friends.some(friend => friend.id !== user.id) : false
-    if (!checkiffrienduser || !checkiffriendtarget) {
+    const checkiffrienduser = user.friends.find(friend => friend.id === target.id)
+    const checkiffriendtarget = target.friends.find(friend => friend.id !== user.id)
+    if (!checkiffrienduser && !checkiffriendtarget) {
       res.status(200).json({
         message: 'both users are not friends'
       })
@@ -362,21 +366,43 @@ const acceptRequest = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id)
     const target = await User.findByPk(req.params.id)
-    const userfriendup = user.friends.filter(friend => {
-      if (friend.id === target.id && friend.status === 'pending' && friend.isInitiator === false) {
-        friend.status = 'accepted'
-      }
-      return friend
+    if (!user || !target) {
+      res.status(404).json({
+        message: 'user not found'
+      })
+    }
+    const userfriendup = user.friends.find(friend => {
+      return friend.id === target.id && friend.status === 'pending' && friend.isInitiator === false
     })
-    user.friends = userfriendup
-    const targetfriendup = target.friends.filter(friend => {
-      if (friend.id === user.id && friend.status === 'pending' && friend.isInitiator === true) {
-        friend.status = 'accepted'
-      }
-      return friend
+    if (userfriendup) {
+      userfriendup.status = 'accepted'
+    }
+    const remove = user.friends.filter(friend => friend.id !== userfriendup.id)
+    remove.push(userfriendup)
+    user.set(
+      'friends', remove
+    )
+    console.log(remove)
+    console.log(user.friends)
+    await user.save()
+    //
+    const targetfriendup = target.friends.find(friend => {
+      return friend.id === user.id && friend.status === 'pending' && friend.isInitiator === true
     })
-    target.friends = targetfriendup
-    await Promise.all([user.save(), target.save()])
+    if (targetfriendup) {
+      targetfriendup.status = 'accepted'
+    }
+    const tremove = target.friends.filter(friend => friend.id !== targetfriendup.id)
+    tremove.push(targetfriendup)
+    target.set(
+      'friends', tremove
+    )
+    await target.save()
+    res.status(200).json({
+      message: 'friend request accepted',
+      user,
+      target
+    })
   } catch (error) {
     next(error)
   }
