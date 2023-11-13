@@ -381,5 +381,4 @@ const acceptRequest = async (req, res, next) => {
     next(error)
   }
 }
-// TODO:ACCEPTED REQUEST
 module.exports = { registerUser, allUsers, user, deleteuser, updateuser, getuserUsername, userLogin, UserProfile, checkUserExistForget, userPosts, addFriend, getrecievedallfriendRequest, getallsentfriendRequest, getUserFriends, cancelRequest, acceptRequest }

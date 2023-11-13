@@ -17,28 +17,14 @@ module.exports = (sequelize) => {
       }
     },
     multimedia: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSONB,
       allowNull: true,
-      defaultValue: null,
-      get () {
-        const storedvalue = this.getDataValue('multimedia')
-        return storedvalue ? storedvalue.split(';') : []
-      },
-      set (val) {
-        this.setDataValue('multimedia', Array.isArray(val) ? val.join(';') : val)
-      }
+      defaultValue: null
     },
     tags: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      defaultValue: null,
-      get () {
-        const storedvalue = this.getDataValue('tags')
-        return storedvalue ? storedvalue.split(';') : []
-      },
-      set (val) {
-        this.setDataValue('tags', Array.isArray(val) ? val.join(';') : val)
-      }
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: null
     }
   },
   {

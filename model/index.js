@@ -17,6 +17,8 @@ db.sequelize = sequelize
 const User = require('./user.model')(sequelize)
 const Profile = require('./profile.model')(sequelize)
 const Post = require('./post.model')(sequelize)
+const Hashtag = require('./hashtag.model')(sequelize)
+const Hashatagmetrics = require('./hashtag_metrics.model')(sequelize)
 // Association
 User.hasOne(Profile, { foreignKey: 'userId', as: 'userProfile' })
 Profile.belongsTo(User, { foreignKey: 'userId', as: 'user' })
@@ -25,4 +27,8 @@ Post.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user'
 })
+Post.hasMany(Hashtag, { through: 'PostHashtag', foreignKey: 'postId' })
+Hashtag.belongsToMany(Post, { through: 'PostHashtag', foreignKey: 'hashtagId' })
+Hashtag.hasOne(Hashatagmetrics, { foreignKey: 'hashtagId', as: 'metics' })
+Hashatagmetrics.belongsTo(Hashtag, { foreignKey: 'hashtagId', as: 'hashtag' })
 module.exports = { db, User, Profile, Post }
