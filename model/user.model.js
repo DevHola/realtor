@@ -33,7 +33,7 @@ module.exports = (sequelize) => {
     friends: {
       type: DataTypes.JSONB,
       allowNull: true,
-      defaultValue: null
+      defaultValue: []
     }
   }, {
     sequelize,

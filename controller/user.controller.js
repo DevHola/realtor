@@ -227,53 +227,41 @@ const userPosts = async (req, res, next) => {
 }
 
 const addFriend = async (req, res, next) => {
-  const user = await User.findByPk(req.user.id)
-  const targetuser = await User.findByPk(req.params.id)
-  const alreadyfriends = user.friends ? user.friends.some(friend => friend.id === targetuser.id) : false
-  const talreadyfriends = targetuser.friends ? targetuser.friends.some(friend => friend.id === user.id) : false
-  // TODO:WHEN USER ADD THE USERID AND STATUS WOULD BE ADDED TO FRIENDS ARRAY IT WOULD ALSO BE ADDED TO THE TARGET FRIEND LIST THEN IF TARGET USER ACCEPT THE BOTH USERS FRIEN STATUS IS ACCEPTED
   try {
+    const user = await User.findByPk(req.user.id)
+    const targetuser = await User.findByPk(req.params.id)
+    const alreadyfriends = user.friends ? user.friends.some(friend => friend.id === targetuser.id) : false
+    const talreadyfriends = targetuser.friends ? targetuser.friends.some(friend => friend.id === user.id) : false
+
+    // Check if the users are already friends
+    if (alreadyfriends || talreadyfriends) {
+      return res.status(200).json({ message: 'already added' })
+    }
+
+    // Add the user to the friend list
     if (user.friends === null) {
-      const fjempty = [{ id: targetuser.id, status: 'pending', isInitiator: true }]
-      user.set(
-        'friends', fjempty)
-      await user.save()
+      user.set('friends', [{ id: targetuser.id, status: 'pending', isInitiator: true }])
     } else {
-      if (alreadyfriends) {
-        res.status(200).json({ message: 'already added' })
-      } else {
-        const friendofuser = [...user.friends, { id: targetuser.id, status: 'pending', isInitiator: true }]
-        const friendjson = friendofuser
-        user.set(
-          'friends', friendjson
-        )
-        await user.save()
-      }
+      const friendofuser = [...user.friends, { id: targetuser.id, status: 'pending', isInitiator: true }]
+      user.set('friends', friendofuser)
     }
+    await user.save()
+
+    // Add the target user to the friend list
     if (targetuser.friends === null) {
-      const tarempty = [{ id: user.id, status: 'pending', isInitiator: false }]
-      targetuser.set(
-        'friends', tarempty
-      )
-      await targetuser.save()
+      targetuser.set('friends', [{ id: user.id, status: 'pending', isInitiator: false }])
     } else {
-      if (talreadyfriends) {
-        res.status(200).json({ message: 'already added' })
-      }
       const friendoftarget = [...targetuser.friends, { id: user.id, status: 'pending', isInitiator: false }]
-      const tf = friendoftarget
-      targetuser.set(
-        'friends', tf
-      )
-      await targetuser.save()
+      targetuser.set('friends', friendoftarget)
     }
-    res.status(200).json({
-      message: 'friend request sent'
-    })
+    await targetuser.save()
+
+    res.status(200).json({ message: 'friend request sent' })
   } catch (error) {
     next(error)
   }
 }
+
 const getrecievedallfriendRequest = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id)
@@ -371,38 +359,16 @@ const acceptRequest = async (req, res, next) => {
         message: 'user not found'
       })
     }
-    const userfriendup = user.friends.find(friend => {
-      return friend.id === target.id && friend.status === 'pending' && friend.isInitiator === false
-    })
-    if (userfriendup) {
-      userfriendup.status = 'accepted'
-    }
-    const remove = user.friends.filter(friend => friend.id !== userfriendup.id)
-    remove.push(userfriendup)
-    user.set(
-      'friends', remove
-    )
-    console.log(remove)
-    console.log(user.friends)
-    await user.save()
-    //
-    const targetfriendup = target.friends.find(friend => {
-      return friend.id === user.id && friend.status === 'pending' && friend.isInitiator === true
-    })
-    if (targetfriendup) {
-      targetfriendup.status = 'accepted'
-    }
-    const tremove = target.friends.filter(friend => friend.id !== targetfriendup.id)
-    tremove.push(targetfriendup)
-    target.set(
-      'friends', tremove
-    )
-    await target.save()
-    res.status(200).json({
-      message: 'friend request accepted',
-      user,
-      target
-    })
+    const userfriendup = user.friends.map(friend => (friend.id === target.id && friend.status === 'pending' && friend.isInitiator === false ? { ...friend, status: 'accepted' } : friend))
+    user.friends = userfriendup
+    const targetfriendup = target.friends.map(friend => (friend.id === user.id && friend.status === 'pending' && friend.isInitiator === true ? { ...friend, status: 'accepted' } : friend))
+    target.friends = targetfriendup
+    await Promise.all([user.save(), target.save()])
+      .then(result => {
+        res.status(200).json({
+          message: 'friend request accepted'
+        })
+      })
   } catch (error) {
     next(error)
   }
